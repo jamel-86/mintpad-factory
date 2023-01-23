@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity >=0.8.11 <0.9.0;
+pragma solidity >=0.8.9 <0.9.0;
 
 import 'erc721a/contracts/extensions/ERC721AQueryable.sol';
 import '@openzeppelin/contracts/access/Ownable.sol';
 import '@openzeppelin/contracts/utils/cryptography/MerkleProof.sol';
 import '@openzeppelin/contracts/security/ReentrancyGuard.sol';
 import '@openzeppelin/contracts/utils/Strings.sol';
+
+// Factory contract that creates the mint pool, to prevent creators of manipulating above contract!
 
 contract Collection is ERC721AQueryable, Ownable, ReentrancyGuard {
 
@@ -37,16 +39,16 @@ contract Collection is ERC721AQueryable, Ownable, ReentrancyGuard {
     uint256 _maxSupply,
     uint256 _maxMintAmountPerTx,
     string memory _hiddenMetadataUri,
-    address payable _creator,
-    address _mintpadFeeAddress
+    address _mintpadFeeAddress,
+    address _creator
   ) ERC721A(_tokenName, _tokenSymbol) {
     setCost(_cost);
     maxSupply = _maxSupply;
     setMaxMintAmountPerTx(_maxMintAmountPerTx);
     setHiddenMetadataUri(_hiddenMetadataUri);
     _transferOwnership(tx.origin);
-    creator = _creator;
     mintpadFeeAddress = _mintpadFeeAddress;
+    creator = _creator;
   }
 
   modifier mintCompliance(uint256 _mintAmount) {
@@ -146,7 +148,6 @@ contract Collection is ERC721AQueryable, Ownable, ReentrancyGuard {
     (bool os, ) = payable(creator).call{value: address(this).balance}('');
     require(os);
     // =============================================================================
-    // This will transfer the ownership of the contract to the creator.
     _transferOwnership(creator);
   }
 
@@ -167,10 +168,10 @@ contract CollectionFactory {
         uint256  _maxSupply,
         uint256  _maxMintAmountPerTx,
         string memory _hiddenMetadataUri,
-        address payable _creator,
-        address _mintpadFeeAddress
+        address _mintpadFeeAddress,
+        address _creator
     ) public { 
-        address newCollection = address(new Collection(_tokenName, _tokenSymbol, _cost, _maxSupply, _maxMintAmountPerTx, _hiddenMetadataUri, _creator, _mintpadFeeAddress));
+        address newCollection = address(new Collection(_tokenName, _tokenSymbol, _cost, _maxSupply, _maxMintAmountPerTx, _hiddenMetadataUri, _mintpadFeeAddress, _creator));
         deployedCollections.push(payable(newCollection));
     }
 
